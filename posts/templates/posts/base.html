@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ blog_title }}{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'posts/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a class="site-title" href="{% url 'posts:list' %}">{{ blog_title }}</a>
+            <p class="site-tagline">{{ blog_tagline }}</p>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; {% now "Y" %} {{ blog_title }}. Built with Django.</p>
+        </div>
+    </footer>
+</body>
+</html>
