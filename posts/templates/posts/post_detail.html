@@ -1,0 +1,17 @@
+{% extends "posts/base.html" %}
+
+{% block title %}{{ post.title }} &middot; {{ blog_title }}{% endblock %}
+
+{% block content %}
+    <article class="post">
+        <p class="back-link"><a href="{% url 'posts:list' %}">&larr; All posts</a></p>
+        <h1 class="post-title">{{ post.title }}</h1>
+        <p class="post-meta">
+            {% if post.author %}By {{ post.author.get_username }} &middot; {% endif %}
+            <time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'F j, Y' }}</time>
+        </p>
+        <div class="post-body">
+            {{ post.body|linebreaks }}
+        </div>
+    </article>
+{% endblock %}
