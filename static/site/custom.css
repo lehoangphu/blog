@@ -1,0 +1,70 @@
+/* Custom styles layered on top of the compiled Tailwind bundle (site.css).
+   Shared by every page so the header, hero animation, and collapsible menu
+   behave consistently. */
+
+/* Sticky header that stays visible, shrinks on scroll, and shows a solid
+   backdrop so it never blends into the page content. */
+#site-header {
+    background-color: transparent;
+}
+#site-header.is-scrolled {
+    background-color: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+#site-header.is-scrolled .lucide-music {
+    height: 1.25rem;
+    width: 1.25rem;
+}
+
+/* Collapsible (mobile) menu revealed by the hamburger toggle. */
+#mobile-menu {
+    display: none;
+    background-color: rgba(255, 255, 255, 0.97);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+#mobile-menu.open {
+    display: block;
+}
+#mobile-menu a {
+    display: block;
+    padding: 0.875rem 1.5rem;
+    color: #2a2622;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+#mobile-menu a:hover,
+#mobile-menu a.active {
+    color: #6b8e23;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+/* The hamburger and its menu are mobile-only; never show them on desktop. */
+@media (min-width: 768px) {
+    #mobile-menu {
+        display: none !important;
+    }
+}
+
+/* On narrow portrait screens the wide hero image is cropped by
+   `background-size: cover`, so slowly pan it left-to-right to reveal the full
+   scene. Only the background animates; foreground content stays put. */
+@media (max-width: 768px) and (orientation: portrait) {
+    #top {
+        animation: hero-pan 24s ease-in-out infinite alternate;
+    }
+}
+@keyframes hero-pan {
+    from { background-position: left center; }
+    to { background-position: right center; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #top {
+        animation: none !important;
+    }
+}
