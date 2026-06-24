@@ -31,7 +31,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: python-app
           path: |
@@ -47,12 +47,12 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: python-app
 
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F52765924A1C4B7D94FCD7538CD6C5F2 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50B3A135A8E44AE988CFDC49E4A303EA }}
