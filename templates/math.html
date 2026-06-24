@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/site/site.css">
     <link rel="stylesheet" href="/static/site/custom.css">
+    <link rel="stylesheet" href="/static/site/math.css">
 </head>
 <body>
 <div id="root">
@@ -17,15 +18,13 @@
         {% include "_header.html" %}
 
         <main class="flex-grow pt-16">
-            <section class="py-24 bg-white">
+            <section class="py-16 bg-white">
                 <div class="section-container">
-                    <div class="text-center mb-12">
-                        <h2 class="section-title">Math</h2>
-                        <p class="section-subtitle">A new section &mdash; content coming soon</p>
+                    <div class="text-center mb-10">
+                        <h2 class="section-title">Math Games</h2>
+                        <p class="section-subtitle">Fun practice for 2nd &amp; 3rd grade &mdash; just tap to play</p>
                     </div>
-                    <div class="max-w-3xl mx-auto bg-muted rounded-lg p-8 border border-border text-center">
-                        <p class="text-lg font-serif">This page is ready and wired into the navigation. Share the details you'd like here and it will be filled in.</p>
-                    </div>
+                    <div id="math-games-root"></div>
                 </div>
             </section>
         </main>
@@ -40,5 +39,6 @@
     </div>
 </div>
 <script src="/static/site/nav.js" defer></script>
+<script src="/static/site/math-games.js" defer></script>
 </body>
 </html>

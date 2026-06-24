@@ -1,0 +1,292 @@
+/* Styling for the Math Games page. Self-contained (does not rely on
+   uncompiled Tailwind utilities) so the games look right on every screen. */
+
+#math-games-root {
+    --mg-ink: #2a2622;
+    --mg-line: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Gallery of game cards ---------- */
+.mg-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+.mg-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0.4rem;
+    padding: 1.5rem;
+    min-height: 190px;
+    border: none;
+    border-radius: 1rem;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-card:hover,
+.mg-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+    outline: none;
+}
+.mg-card:active {
+    transform: translateY(-1px) scale(0.99);
+}
+.mg-card-emoji {
+    font-size: 2.75rem;
+    line-height: 1;
+}
+.mg-card-title {
+    font-family: "Playfair Display", serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+.mg-card-desc {
+    font-size: 0.9rem;
+    opacity: 0.92;
+}
+.mg-card-play {
+    margin-top: auto;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.22);
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+}
+
+/* Per-game accent colors */
+.mg-c-add   { background: linear-gradient(150deg, #7ba428, #5d7e1c); }
+.mg-c-sub   { background: linear-gradient(150deg, #e98b6e, #d2664a); }
+.mg-c-ten   { background: linear-gradient(150deg, #5697cf, #3d72ad); }
+.mg-c-skip  { background: linear-gradient(150deg, #9b78be, #7a559e); }
+.mg-c-times { background: linear-gradient(150deg, #e8b15f, #cf8f3a); }
+
+/* ---------- Expanded game stage ---------- */
+.mg-stage {
+    width: 100%;
+}
+.mg-stage-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.mg-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid var(--mg-line);
+    background: #fff;
+    color: var(--mg-ink);
+    font-weight: 600;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-back:hover { background: #f3efe9; }
+.mg-back:active { transform: scale(0.97); }
+.mg-stage-title {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 700;
+    color: var(--mg-ink);
+}
+
+.mg-stage-body {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #faf8f5;
+    border: 1px solid var(--mg-line);
+    border-radius: 1.25rem;
+}
+
+/* shared play-area pieces */
+.mg-progress {
+    font-weight: 600;
+    color: #6b6258;
+    letter-spacing: 0.01em;
+}
+.mg-stars {
+    font-size: 1.4rem;
+    letter-spacing: 0.15rem;
+    min-height: 1.6rem;
+}
+.mg-prompt {
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
+    color: var(--mg-ink);
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    text-align: center;
+    line-height: 1.15;
+}
+.mg-prompt small {
+    display: block;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: #6b6258;
+    margin-top: 0.5rem;
+}
+
+.mg-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 520px;
+}
+.mg-choice {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 700;
+    color: var(--mg-ink);
+    background: #fff;
+    border: 2px solid var(--mg-line);
+    border-radius: 1rem;
+    min-height: 92px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.18s ease,
+        border-color 0.18s ease, color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-choice:hover { border-color: #c9a96a; }
+.mg-choice:active { transform: scale(0.96); }
+.mg-choice.correct {
+    background: #5d7e1c;
+    border-color: #5d7e1c;
+    color: #fff;
+    animation: mg-pop 0.35s ease;
+}
+.mg-choice.wrong {
+    background: #f6d6cd;
+    border-color: #d2664a;
+    color: #a23c22;
+    animation: mg-shake 0.35s ease;
+}
+
+.mg-feedback {
+    min-height: 1.8rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+.mg-feedback.good { color: #5d7e1c; }
+.mg-feedback.bad { color: #cf6a4a; }
+
+/* dot array for the multiplication game */
+.mg-array {
+    display: inline-grid;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border: 2px solid var(--mg-line);
+    border-radius: 1rem;
+}
+.mg-array-row { display: flex; gap: 0.6rem; }
+.mg-dot {
+    width: clamp(18px, 4.5vw, 30px);
+    height: clamp(18px, 4.5vw, 30px);
+    border-radius: 50%;
+    background: #e0a458;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* make-ten board */
+.mg-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(70px, 1fr));
+    gap: 0.9rem;
+    width: 100%;
+    max-width: 560px;
+}
+.mg-tile {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 700;
+    color: var(--mg-ink);
+    background: #fff;
+    border: 2px solid var(--mg-line);
+    border-radius: 1rem;
+    min-height: 84px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.18s ease,
+        border-color 0.18s ease, color 0.18s ease, opacity 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-tile:active { transform: scale(0.96); }
+.mg-tile.sel {
+    background: #5697cf;
+    border-color: #3d72ad;
+    color: #fff;
+}
+.mg-tile.hit {
+    background: #5d7e1c;
+    border-color: #5d7e1c;
+    color: #fff;
+    animation: mg-pop 0.35s ease;
+}
+.mg-tile.miss { animation: mg-shake 0.35s ease; }
+
+/* win / done card */
+.mg-done {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.mg-done-emoji { font-size: 4rem; line-height: 1; }
+.mg-done-title {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 800;
+    color: var(--mg-ink);
+}
+.mg-done-score { font-size: 1.25rem; color: #6b6258; }
+.mg-btn {
+    padding: 0.85rem 1.6rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    background: #6b8e23;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-btn:hover { background: #5d7e1c; }
+.mg-btn:active { transform: scale(0.97); }
+
+@keyframes mg-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+@keyframes mg-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mg-choice, .mg-tile, .mg-card, .mg-back, .mg-btn { transition: none; }
+    .mg-choice.correct, .mg-choice.wrong, .mg-tile.hit, .mg-tile.miss { animation: none; }
+}
+
+@media (max-width: 480px) {
+    .mg-board { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
+}
