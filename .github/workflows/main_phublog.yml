@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
+      id-token: write   # required for requesting the OIDC JWT
       contents: read
 
     steps:
@@ -50,10 +51,16 @@ jobs:
         with:
           name: python-app
 
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F52765924A1C4B7D94FCD7538CD6C5F2 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50B3A135A8E44AE988CFDC49E4A303EA }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_32F8F38F90FE4BD0AEA3D4B7699F042D }}
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'phublog'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}

@@ -80,20 +80,24 @@ python -m unittest test_app -v
 
 Deployment is automated by `.github/workflows/main_phublog.yml`, which builds
 the Python 3.14 app and deploys to the `phublog` Web App on every push to
-`main` using the **publish-profile** method.
+`main`. It authenticates to Azure using **OpenID Connect (OIDC)** federated
+credentials.
 
 ### One-time setup
 
-1. In the Azure portal, open the Web App → **Overview** → **Get publish profile**
-   and download the `.PublishSettings` file.
-2. In the GitHub repo, go to **Settings → Secrets and variables → Actions** and
-   add a secret named **`AZUREAPPSERVICE_PUBLISHPROFILE`** with the file's contents.
-3. (Recommended) Set the App Service **Startup Command** to:
+The following repo secrets must exist (already configured for this project):
 
-   ```
-   gunicorn app:app
-   ```
+- `AZUREAPPSERVICE_CLIENTID_…`
+- `AZUREAPPSERVICE_TENANTID_…`
+- `AZUREAPPSERVICE_SUBSCRIPTIONID_…`
 
-   Azure's Oryx build also auto-detects `app:app`, so this is belt-and-braces.
+These correspond to an Azure AD app registration with a federated credential
+trusting this repo. (Recommended) Set the App Service **Startup Command** to:
+
+```
+gunicorn app:app
+```
+
+Azure's Oryx build also auto-detects `app:app`, so this is belt-and-braces.
 
 Push to `main` and the workflow builds and deploys automatically.
