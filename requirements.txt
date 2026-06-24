@@ -1,3 +1,4 @@
-Django>=5.2,<5.3
+Flask>=3.1,<4.0
+Flask-SQLAlchemy>=3.1,<4.0
+SQLAlchemy>=2.0.36,<3.0
 gunicorn>=23.0
-whitenoise>=6.7
