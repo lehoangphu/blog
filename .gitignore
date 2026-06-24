@@ -9,11 +9,13 @@ venv/
 env/
 antenv/
 
-# Django
+# Flask / SQLite
 *.log
+*.db
+blog.db
 db.sqlite3
 db.sqlite3-journal
-/staticfiles/
+instance/
 media/
 
 # Environment files

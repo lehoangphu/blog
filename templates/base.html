@@ -4,13 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ blog_title }}{% endblock %}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'posts/css/style.css' %}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <header class="site-header">
         <div class="container">
-            <a class="site-title" href="{% url 'posts:list' %}">{{ blog_title }}</a>
+            <a class="site-title" href="{{ url_for('index') }}">{{ blog_title }}</a>
             <p class="site-tagline">{{ blog_tagline }}</p>
         </div>
     </header>
@@ -21,7 +20,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>&copy; {% now "Y" %} {{ blog_title }}. Built with Django.</p>
+            <p>&copy; {{ now_year }} {{ blog_title }}. Built with Flask.</p>
         </div>
     </footer>
 </body>

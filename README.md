@@ -1,38 +1,39 @@
 # Phu's Blog
 
-A personal blog built with [Django](https://www.djangoproject.com/) (the most
-popular Python web framework) and **Python 3.14**. It ships with a post model,
-a clean reading experience, the Django admin for writing posts, and a
-ready-to-go Azure App Service deployment.
+A personal blog web application built with **Flask** and **SQLAlchemy**, written
+for **Python 3.14** and optimized for deployment on **Azure App Service
+(Linux)** behind Gunicorn.
 
 ## Features
 
-- 📝 Write and manage posts from the built-in Django admin (drafts + scheduled publishing)
-- 🏠 Blog index listing published posts, with individual post pages
-- 🎨 Lightweight, responsive styling (no frontend build step)
-- ⚡ Static files served by [WhiteNoise](https://whitenoise.readthedocs.io/) — no separate CDN needed
-- 🔒 Environment-driven, production-ready settings (`SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, HTTPS hardening)
-- ☁️ Deploys to Azure App Service via the included GitHub Actions workflow
+- 🏠 Homepage listing all blog posts (newest first)
+- 📄 Dynamic individual post pages (`/post/<id>/`)
+- 🗂️ Posts stored in SQLite via SQLAlchemy (Title, Date, Content, Category)
+- 🎨 Clean, responsive Jinja2 + CSS templates (no frontend build step)
+- 🌱 Seed script that pre-populates starter content
+- ☁️ GitHub Actions workflow that deploys to Azure using the publish-profile method
 
 ## Tech stack
 
-| Layer       | Choice                          |
-| ----------- | ------------------------------- |
-| Language    | Python 3.14                     |
-| Framework   | Django 5.2 (LTS)                |
-| Database    | SQLite (default)                |
-| WSGI server | Gunicorn                        |
-| Static      | WhiteNoise                      |
-| Hosting     | Azure App Service               |
+| Layer       | Choice                       |
+| ----------- | ---------------------------- |
+| Language    | Python 3.14                  |
+| Framework   | Flask 3                      |
+| ORM         | Flask-SQLAlchemy / SQLAlchemy 2 |
+| Database    | SQLite                       |
+| WSGI server | Gunicorn                     |
+| Hosting     | Azure App Service (Linux)    |
 
 ## Project structure
 
 ```
-blog/            # Django project (settings, urls, wsgi/asgi)
-posts/           # Blog app: models, views, admin, templates, static, migrations
-manage.py        # Django management entry point
-requirements.txt # Python dependencies
-startup.sh       # Azure App Service startup command (migrate + gunicorn)
+app.py             # Flask app: config, Post model, routes (homepage + post pages)
+seed.py            # Script to (re)populate the database with starter posts
+templates/         # Jinja2 templates (base, index, post, 404)
+static/css/        # Responsive stylesheet
+requirements.txt   # Flask, Flask-SQLAlchemy, SQLAlchemy, gunicorn
+test_app.py        # Smoke tests (stdlib unittest)
+.github/workflows/ # Azure deploy workflow (publish-profile method)
 ```
 
 ## Local development
@@ -50,61 +51,49 @@ source .venv/bin/activate
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Apply migrations (also seeds a few sample posts)
-python manage.py migrate
+# 3. (Optional) Seed the database with the starter posts
+python seed.py
 
-# 4. Create an admin user so you can write posts
-python manage.py createsuperuser
-
-# 5. Run the development server
-python manage.py runserver
+# 4. Run the app
+flask run
+# or: python app.py
 ```
 
-Then visit:
-
-- http://127.0.0.1:8000/ — the blog
-- http://127.0.0.1:8000/admin/ — write and manage posts
+The app auto-creates the SQLite database and seeds it on first run, so visiting
+http://127.0.0.1:5000/ just works.
 
 ## Running tests
 
 ```bash
-python manage.py test
+python -m unittest test_app -v
 ```
 
 ## Configuration
 
-Settings read from environment variables, so the same code runs locally and in
-production:
+| Variable       | Default                          | Purpose                          |
+| -------------- | -------------------------------- | -------------------------------- |
+| `DATABASE_URL` | `sqlite:///blog.db`              | SQLAlchemy database URL          |
+| `BLOG_TITLE`   | `Phu's Blog`                     | Site title shown in the header   |
+| `BLOG_TAGLINE` | `Watches, bikes, code, ...`      | Site tagline                     |
 
-| Variable                       | Default                          | Purpose                                  |
-| ------------------------------ | -------------------------------- | ---------------------------------------- |
-| `DJANGO_SECRET_KEY`            | insecure dev key                 | Cryptographic signing key (set in prod!) |
-| `DJANGO_DEBUG`                 | `True`                           | Enable/disable debug mode                |
-| `DJANGO_ALLOWED_HOSTS`         | `localhost,127.0.0.1`            | Comma-separated allowed hostnames        |
-| `DJANGO_CSRF_TRUSTED_ORIGINS`  | _(empty)_                        | Comma-separated trusted origins          |
-| `BLOG_TITLE`                   | `Phu's Blog`                     | Site title shown in the header           |
-| `BLOG_TAGLINE`                 | `Thoughts on code, life, ...`    | Site tagline                             |
-| `DJANGO_TIME_ZONE`             | `UTC`                            | Server time zone                         |
-
-On Azure, `WEBSITE_HOSTNAME` is detected automatically and added to
-`ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
-
-## Deployment (Azure App Service)
+## Deployment (Azure App Service, Linux)
 
 Deployment is automated by `.github/workflows/main_phublog.yml`, which builds
-and deploys to the `phublog` Web App on every push to `main`.
+the Python 3.14 app and deploys to the `phublog` Web App on every push to
+`main` using the **publish-profile** method.
 
-In the Azure portal, set these **Application settings** for the Web App:
+### One-time setup
 
-- `DJANGO_SECRET_KEY` — a long, random value
-- `DJANGO_DEBUG` — `False`
-- `DJANGO_ALLOWED_HOSTS` — `phublog.azurewebsites.net` (and any custom domains)
+1. In the Azure portal, open the Web App → **Overview** → **Get publish profile**
+   and download the `.PublishSettings` file.
+2. In the GitHub repo, go to **Settings → Secrets and variables → Actions** and
+   add a secret named **`AZUREAPPSERVICE_PUBLISHPROFILE`** with the file's contents.
+3. (Recommended) Set the App Service **Startup Command** to:
 
-And set the **Startup Command** to:
+   ```
+   gunicorn app:app
+   ```
 
-```
-startup.sh
-```
+   Azure's Oryx build also auto-detects `app:app`, so this is belt-and-braces.
 
-The build automatically runs `collectstatic`; `startup.sh` applies database
-migrations and starts Gunicorn.
+Push to `main` and the workflow builds and deploys automatically.

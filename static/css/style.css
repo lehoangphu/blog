@@ -1,10 +1,10 @@
 :root {
-    --accent: #2b6cb0;
-    --text: #1a202c;
-    --muted: #718096;
-    --bg: #f7fafc;
+    --accent: #b8531a;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --bg: #faf7f2;
     --card: #ffffff;
-    --border: #e2e8f0;
+    --border: #e7e2d8;
 }
 
 * {
@@ -58,9 +58,22 @@ main.container {
 .post-list-item {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.25rem;
+}
+
+.post-category {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(184, 83, 26, 0.1);
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.6rem;
 }
 
 .post-list-title {
@@ -96,12 +109,16 @@ main.container {
 }
 
 .post-title {
-    margin-bottom: 0.25rem;
+    margin: 0.25rem 0;
     font-size: 2rem;
 }
 
 .post-body {
     margin-top: 1.5rem;
+}
+
+.post-body p {
+    margin: 0 0 1.1rem;
 }
 
 .back-link {
@@ -118,4 +135,14 @@ main.container {
     color: var(--muted);
     font-size: 0.9rem;
     padding: 1.5rem 0;
+}
+
+@media (max-width: 480px) {
+    .post-title {
+        font-size: 1.6rem;
+    }
+
+    .site-title {
+        font-size: 1.5rem;
+    }
 }
