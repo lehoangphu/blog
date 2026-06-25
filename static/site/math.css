@@ -199,9 +199,11 @@
 .mg-lb-note.bad { color: #b3261e; }
 
 
+.mg-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.25rem;
+    align-items: start;
 }
 .mg-card {
     position: relative;
@@ -212,12 +214,12 @@
     gap: 0.4rem;
     padding: 1.5rem;
     min-height: 190px;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 1rem;
     color: #fff;
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     -webkit-tap-highlight-color: transparent;
 }
 .mg-card:hover,
@@ -225,6 +227,7 @@
     transform: translateY(-4px);
     box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
     outline: none;
+    border-color: #f0c46b; /* subtle gold highlight on hover */
 }
 .mg-card:active {
     transform: translateY(-1px) scale(0.99);
