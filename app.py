@@ -44,5 +44,36 @@ def api_post_message():
     return jsonify(message), 201
 
 
+@app.route("/api/scores/<game>", methods=["GET"])
+def api_get_scores(game):
+    try:
+        board = db.get_leaderboard(game)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
+    return jsonify({"leaderboard": board})
+
+
+@app.route("/api/scores/<game>/qualifies", methods=["GET"])
+def api_score_qualifies(game):
+    score = request.args.get("score", default=0, type=int)
+    try:
+        ok = db.qualifies(game, score)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
+    return jsonify({"qualifies": ok})
+
+
+@app.route("/api/scores", methods=["POST"])
+def api_post_score():
+    data = request.get_json(silent=True) or {}
+    try:
+        result = db.add_score(
+            data.get("game"), data.get("name"), data.get("score")
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(result), 201
+
+
 if __name__ == "__main__":
     app.run(debug=True)

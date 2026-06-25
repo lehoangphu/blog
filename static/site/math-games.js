@@ -101,7 +101,7 @@
     // config: { makeQuestion() -> {promptHTML, answer}, spread, choices }
     // mode: "practice" (10 questions, first-try stars) or
     //       "challenge" (unlimited questions, score = correct answers in 30s).
-    function runMultipleChoice(body, config, mode) {
+    function runMultipleChoice(body, config, mode, game) {
         mode = mode || "practice";
         var challenge = mode === "challenge";
         var spread = config.spread || 6;
@@ -201,28 +201,29 @@
 
         function finish() {
             clearActiveTimer();
+            if (challenge) {
+                var replay = function () {
+                    body.innerHTML = "";
+                    runMultipleChoice(body, config, mode, game);
+                };
+                var scoreText =
+                    "You got " + score + " correct in " + CHALLENGE_SECONDS + " seconds!";
+                renderChallengeDone(body, game, score, scoreText, replay);
+                return;
+            }
             body.innerHTML = "";
             var done = el("div", "mg-done");
-            if (challenge) {
-                done.append(
-                    el("div", "mg-done-emoji", "\u23F1\uFE0F"),
-                    el("div", "mg-done-title", "Time's up!"),
-                    el("div", "mg-done-score",
-                        "You got " + score + " correct in " + CHALLENGE_SECONDS + " seconds!")
-                );
-            } else {
-                done.append(
-                    el("div", "mg-done-emoji", score >= 8 ? "\uD83C\uDFC6" : "\uD83C\uDF89"),
-                    el("div", "mg-done-title", "All done!"),
-                    el("div", "mg-done-score",
-                        "You earned " + score + " of " + ROUNDS + " stars on the first try.")
-                );
-            }
+            done.append(
+                el("div", "mg-done-emoji", score >= 8 ? "\uD83C\uDFC6" : "\uD83C\uDF89"),
+                el("div", "mg-done-title", "All done!"),
+                el("div", "mg-done-score",
+                    "You earned " + score + " of " + ROUNDS + " stars on the first try.")
+            );
             var again = el("button", "mg-btn", "Play again");
             again.type = "button";
             again.addEventListener("click", function () {
                 body.innerHTML = "";
-                runMultipleChoice(body, config, mode);
+                runMultipleChoice(body, config, mode, game);
             });
             done.append(again);
             body.append(done);
@@ -240,7 +241,7 @@
     }
 
     // ---------- Make Ten (number bonds, custom tap game) ----------
-    function runMakeTen(body, mode) {
+    function runMakeTen(body, mode, game) {
         mode = mode || "practice";
         var challenge = mode === "challenge";
         var TARGET = 10;
@@ -383,7 +384,7 @@
             again.type = "button";
             again.addEventListener("click", function () {
                 body.innerHTML = "";
-                runMakeTen(body, mode);
+                runMakeTen(body, mode, game);
             });
             done.append(again);
             body.append(done);
@@ -391,22 +392,13 @@
 
         function timeUp() {
             over = true;
-            body.innerHTML = "";
-            var done = el("div", "mg-done");
-            done.append(
-                el("div", "mg-done-emoji", "\u23F1\uFE0F"),
-                el("div", "mg-done-title", "Time's up!"),
-                el("div", "mg-done-score",
-                    "You made " + found + " pairs in " + CHALLENGE_SECONDS + " seconds!")
-            );
-            var again = el("button", "mg-btn", "Play again");
-            again.type = "button";
-            again.addEventListener("click", function () {
+            var replay = function () {
                 body.innerHTML = "";
-                runMakeTen(body, mode);
-            });
-            done.append(again);
-            body.append(done);
+                runMakeTen(body, mode, game);
+            };
+            var scoreText =
+                "You made " + found + " pairs in " + CHALLENGE_SECONDS + " seconds!";
+            renderChallengeDone(body, game, found, scoreText, replay);
         }
 
         nums = generate();
@@ -602,7 +594,7 @@
         },
     ];
 
-    function runPuzzle(body, mode) {
+    function runPuzzle(body, mode, game) {
         runMultipleChoice(body, {
             makeQuestion: function () {
                 var tmpl = pick(WP_TEMPLATES)();
@@ -613,7 +605,7 @@
                     choices: buildChoices(tmpl.answer, tmpl.distractors),
                 };
             },
-        }, mode);
+        }, mode, game);
     }
 
     var GAMES = [
@@ -623,7 +615,7 @@
             emoji: "\u2795",
             color: "mg-c-add",
             desc: "Add the numbers and tap the answer.",
-            run: function (body, mode) {
+            run: function (body, mode, game) {
                 runMultipleChoice(body, {
                     spread: 6,
                     makeQuestion: function () {
@@ -631,7 +623,7 @@
                         var b = rand(2, 20);
                         return { promptHTML: a + " + " + b, answer: a + b };
                     },
-                }, mode);
+                }, mode, game);
             },
         },
         {
@@ -640,7 +632,7 @@
             emoji: "\u2796",
             color: "mg-c-sub",
             desc: "Subtract and tap what is left.",
-            run: function (body, mode) {
+            run: function (body, mode, game) {
                 runMultipleChoice(body, {
                     spread: 6,
                     makeQuestion: function () {
@@ -648,7 +640,7 @@
                         var b = rand(1, a - 1);
                         return { promptHTML: a + " \u2212 " + b, answer: a - b };
                     },
-                }, mode);
+                }, mode, game);
             },
         },
         {
@@ -657,8 +649,8 @@
             emoji: "\uD83D\uDD1F",
             color: "mg-c-ten",
             desc: "Tap two cards that add up to 10.",
-            run: function (body, mode) {
-                runMakeTen(body, mode);
+            run: function (body, mode, game) {
+                runMakeTen(body, mode, game);
             },
         },
         {
@@ -667,7 +659,7 @@
             emoji: "\uD83D\uDC63",
             color: "mg-c-skip",
             desc: "Find the missing number in the count.",
-            run: function (body, mode) {
+            run: function (body, mode, game) {
                 runMultipleChoice(body, {
                     spread: 0,
                     makeQuestion: function () {
@@ -693,7 +685,7 @@
                         };
                     },
                     choices: 4,
-                }, mode);
+                }, mode, game);
             },
         },
         {
@@ -702,7 +694,7 @@
             emoji: "\u2716\uFE0F",
             color: "mg-c-times",
             desc: "Count the dots to find the product.",
-            run: function (body, mode) {
+            run: function (body, mode, game) {
                 runMultipleChoice(body, {
                     spread: 4,
                     makeQuestion: function () {
@@ -715,7 +707,7 @@
                             answer: rows * cols,
                         };
                     },
-                }, mode);
+                }, mode, game);
             },
         },
         {
@@ -724,11 +716,227 @@
             emoji: "\uD83E\uDDE9",
             color: "mg-c-puzzle",
             desc: "Solve a silly word problem and tap the answer.",
-            run: function (body, mode) {
-                runPuzzle(body, mode);
+            run: function (body, mode, game) {
+                runPuzzle(body, mode, game);
             },
         },
     ];
+
+    // ---------- leaderboards (challenge mode) ----------
+    function lbFetch(gameId) {
+        return fetch("/api/scores/" + encodeURIComponent(gameId), {
+            headers: { Accept: "application/json" },
+        }).then(function (r) {
+            if (!r.ok) throw new Error("load failed");
+            return r.json();
+        });
+    }
+    function lbQualifies(gameId, score) {
+        return fetch(
+            "/api/scores/" + encodeURIComponent(gameId) + "/qualifies?score=" + score,
+            { headers: { Accept: "application/json" } }
+        ).then(function (r) {
+            if (!r.ok) throw new Error("check failed");
+            return r.json();
+        });
+    }
+    function lbSubmit(gameId, name, score) {
+        return fetch("/api/scores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ game: gameId, name: name, score: score }),
+        }).then(function (r) {
+            return r.json().then(function (data) {
+                if (!r.ok) throw new Error(data.error || "save failed");
+                return data;
+            });
+        });
+    }
+
+    var NAME_KEY = "mg_name";
+    function getSavedName() {
+        try {
+            return localStorage.getItem(NAME_KEY) || "";
+        } catch (e) {
+            return "";
+        }
+    }
+    function saveName(name) {
+        try {
+            localStorage.setItem(NAME_KEY, name);
+        } catch (e) {
+            /* ignore */
+        }
+    }
+
+    // Render a leaderboard table for one game into a container element.
+    function renderLeaderboardInto(container, gameId, highlightRank) {
+        container.innerHTML = "";
+        container.append(el("div", "mg-lb-loading", "Loading scores\u2026"));
+        lbFetch(gameId).then(function (data) {
+            container.innerHTML = "";
+            var board = (data && data.leaderboard) || [];
+            if (!board.length) {
+                container.append(
+                    el("div", "mg-lb-empty",
+                        "No scores yet \u2014 be the first to make the board!")
+                );
+                return;
+            }
+            var list = el("ol", "mg-lb-list");
+            board.forEach(function (entry) {
+                var row = el("li", "mg-lb-row");
+                if (highlightRank && entry.rank === highlightRank) {
+                    row.classList.add("is-you");
+                }
+                var medal = entry.rank === 1 ? "\uD83E\uDD47"
+                    : entry.rank === 2 ? "\uD83E\uDD48"
+                    : entry.rank === 3 ? "\uD83E\uDD49"
+                    : entry.rank + ".";
+                row.append(
+                    el("span", "mg-lb-rank", medal),
+                    el("span", "mg-lb-name", escapeText(entry.name)),
+                    el("span", "mg-lb-score", String(entry.score))
+                );
+                list.append(row);
+            });
+            container.append(list);
+        }).catch(function () {
+            container.innerHTML = "";
+            container.append(
+                el("div", "mg-lb-empty", "Couldn't load the leaderboard. Try again later.")
+            );
+        });
+    }
+
+    // Full-page leaderboard view with a tab per game.
+    function showLeaderboards(initialGameId) {
+        clearActiveTimer();
+        root.innerHTML = "";
+        var stage = el("div", "mg-stage");
+        var bar = el("div", "mg-stage-bar");
+        var back = el("button", "mg-back", "\u2190 All games");
+        back.type = "button";
+        back.addEventListener("click", showGallery);
+        bar.append(
+            back,
+            el("span", "mg-stage-title", "\uD83C\uDFC6  Leaderboards"),
+            el("span", "mg-stage-mode is-challenge", "\u23F1\uFE0F Challenge")
+        );
+        var body = el("div", "mg-stage-body");
+        var tabs = el("div", "mg-lb-tabs");
+        var boardWrap = el("div", "mg-lb-board");
+        body.append(tabs, boardWrap);
+        stage.append(bar, body);
+        root.append(stage);
+
+        var current = initialGameId || GAMES[0].id;
+        var tabButtons = {};
+        GAMES.forEach(function (game) {
+            var t = el("button", "mg-lb-tab", game.emoji + " " + game.title);
+            t.type = "button";
+            if (game.id === current) t.classList.add("active");
+            t.addEventListener("click", function () {
+                if (current === game.id) return;
+                current = game.id;
+                Object.keys(tabButtons).forEach(function (id) {
+                    tabButtons[id].classList.toggle("active", id === current);
+                });
+                renderLeaderboardInto(boardWrap, current);
+            });
+            tabButtons[game.id] = t;
+            tabs.append(t);
+        });
+
+        var header = document.getElementById("site-header");
+        var offset = header ? header.offsetHeight + 12 : 80;
+        var top = root.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: top, behavior: "smooth" });
+
+        renderLeaderboardInto(boardWrap, current);
+    }
+
+    // Build the end-of-challenge screen: score, replay/leaderboard buttons, and
+    // (when the score makes the top 10) a name-entry form that submits the score.
+    function renderChallengeDone(body, game, score, scoreText, replay) {
+        clearActiveTimer();
+        body.innerHTML = "";
+        var done = el("div", "mg-done");
+        done.append(
+            el("div", "mg-done-emoji", "\u23F1\uFE0F"),
+            el("div", "mg-done-title", "Time's up!"),
+            el("div", "mg-done-score", scoreText)
+        );
+
+        var formWrap = el("div", "mg-lb-formwrap");
+        var boardWrap = el("div", "mg-lb-board");
+
+        var actions = el("div", "mg-done-actions");
+        var again = el("button", "mg-btn", "Play again");
+        again.type = "button";
+        again.addEventListener("click", replay);
+        var lbBtn = el("button", "mg-btn mg-btn-ghost", "\uD83C\uDFC6 Leaderboard");
+        lbBtn.type = "button";
+        lbBtn.addEventListener("click", function () {
+            renderLeaderboardInto(boardWrap, game.id);
+        });
+        actions.append(again, lbBtn);
+
+        done.append(actions, formWrap, boardWrap);
+        body.append(done);
+
+        if (score > 0) {
+            lbQualifies(game.id, score).then(function (data) {
+                if (!data || !data.qualifies) return;
+                buildNameForm(formWrap, boardWrap, game, score);
+            }).catch(function () { /* offline: skip */ });
+        }
+    }
+
+    function buildNameForm(formWrap, boardWrap, game, score) {
+        formWrap.innerHTML = "";
+        formWrap.append(
+            el("div", "mg-lb-congrats", "\uD83C\uDF89 Top 10! Add your name to the leaderboard:")
+        );
+        var rowEl = el("form", "mg-lb-form");
+        var input = document.createElement("input");
+        input.type = "text";
+        input.className = "mg-lb-input";
+        input.maxLength = 24;
+        input.placeholder = "Your name";
+        input.value = getSavedName();
+        var submit = el("button", "mg-btn", "Save score");
+        submit.type = "submit";
+        rowEl.append(input, submit);
+        var note = el("div", "mg-lb-note");
+        formWrap.append(rowEl, note);
+        input.focus();
+
+        rowEl.addEventListener("submit", function (ev) {
+            ev.preventDefault();
+            var name = input.value.trim() || "Anonymous";
+            saveName(name);
+            submit.disabled = true;
+            input.disabled = true;
+            submit.textContent = "Saving\u2026";
+            lbSubmit(game.id, name, score).then(function (data) {
+                formWrap.innerHTML = "";
+                formWrap.append(
+                    el("div", "mg-lb-congrats",
+                        data.rank
+                            ? "\uD83C\uDF1F You're #" + data.rank + " on the board!"
+                            : "Saved! Here's the leaderboard:")
+                );
+                renderLeaderboardInto(boardWrap, game.id, data.rank);
+            }).catch(function () {
+                submit.disabled = false;
+                input.disabled = false;
+                submit.textContent = "Save score";
+                note.textContent = "Couldn't save \u2014 please try again.";
+                note.className = "mg-lb-note bad";
+            });
+        });
+    }
 
     // ---------- gallery / stage navigation ----------
     function buildModeBar(onChange) {
@@ -770,7 +978,15 @@
                 ? "Race the clock \u2014 30 seconds, unlimited questions!"
                 : "Take your time \u2014 no clock, just practice.";
         });
-        top.append(hint, modebar);
+        var lbButton = el("button", "mg-lb-open", "\uD83C\uDFC6 Leaderboards");
+        lbButton.type = "button";
+        lbButton.setAttribute("aria-label", "View leaderboards");
+        lbButton.addEventListener("click", function () {
+            showLeaderboards();
+        });
+        var controls = el("div", "mg-controls");
+        controls.append(modebar, lbButton);
+        top.append(hint, controls);
         root.append(top);
 
         var gallery = el("div", "mg-gallery");
@@ -813,7 +1029,7 @@
         var top = root.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: top, behavior: "smooth" });
 
-        game.run(stageBody, mode);
+        game.run(stageBody, mode, game);
     }
 
     showGallery();

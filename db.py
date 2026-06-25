@@ -23,6 +23,7 @@ from sqlalchemy import (
     String,
     Table,
     create_engine,
+    func,
     insert,
     select,
 )
@@ -31,6 +32,12 @@ from sqlalchemy.engine import URL
 USERNAME_MAX = 40
 BODY_MAX = 1000
 DEFAULT_LIMIT = 100
+
+# Leaderboard configuration for the Math challenge games.
+SCORE_NAME_MAX = 24
+LEADERBOARD_SIZE = 10
+GAME_MAX = 20
+VALID_GAMES = {"add", "sub", "ten", "skip", "times", "puzzle"}
 
 
 def _engine_url():
@@ -85,9 +92,21 @@ messages = Table(
     Column("created_at", DateTime, nullable=False),
 )
 
+# Per-game high scores for the Math challenge mode. One row per submitted run;
+# the leaderboard is the top ``LEADERBOARD_SIZE`` rows for a game.
+scores = Table(
+    "scores",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("game", String(GAME_MAX), nullable=False, index=True),
+    Column("name", String(SCORE_NAME_MAX), nullable=False),
+    Column("score", Integer, nullable=False),
+    Column("created_at", DateTime, nullable=False),
+)
+
 
 def init_db():
-    """Create the messages table if it does not yet exist."""
+    """Create the database tables if they do not yet exist."""
     metadata.create_all(engine)
 
 
@@ -148,3 +167,102 @@ def add_message(username, body):
         "body": body,
         "created_at": now.replace(tzinfo=timezone.utc).isoformat(),
     }
+
+
+# ---------- Math challenge leaderboards ----------
+
+def _normalize_game(game):
+    game = (game or "").strip().lower()
+    if game not in VALID_GAMES:
+        raise ValueError("Unknown game.")
+    return game
+
+
+def _serialize_score(row, rank):
+    created = row["created_at"]
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    return {
+        "rank": rank,
+        "name": row["name"],
+        "score": row["score"],
+        "created_at": created.isoformat(),
+    }
+
+
+def get_leaderboard(game, limit=LEADERBOARD_SIZE):
+    """Return the top scores for a game, highest first (ties: earliest wins)."""
+    game = _normalize_game(game)
+    with engine.connect() as conn:
+        stmt = (
+            select(scores)
+            .where(scores.c.game == game)
+            .order_by(scores.c.score.desc(), scores.c.created_at.asc())
+            .limit(limit)
+        )
+        rows = conn.execute(stmt).mappings().all()
+    return [_serialize_score(r, i + 1) for i, r in enumerate(rows)]
+
+
+def qualifies(game, score):
+    """True if ``score`` would land in the top ``LEADERBOARD_SIZE`` for a game."""
+    game = _normalize_game(game)
+    if score is None or score <= 0:
+        return False
+    with engine.connect() as conn:
+        count = conn.execute(
+            select(func.count())
+            .select_from(scores)
+            .where(scores.c.game == game)
+        ).scalar_one()
+        if count < LEADERBOARD_SIZE:
+            return True
+        lowest = conn.execute(
+            select(func.min(scores.c.score)).where(
+                scores.c.game == game,
+                scores.c.score.in_(
+                    select(scores.c.score)
+                    .where(scores.c.game == game)
+                    .order_by(scores.c.score.desc())
+                    .limit(LEADERBOARD_SIZE)
+                ),
+            )
+        ).scalar_one()
+    return lowest is None or score > lowest
+
+
+def add_score(game, name, score):
+    """Validate and store a challenge score; return the updated leaderboard.
+
+    Returns ``{"leaderboard": [...], "rank": int|None}`` where ``rank`` is the
+    submitted run's position within the top ``LEADERBOARD_SIZE`` (or ``None`` if
+    it did not make the board).
+    """
+    game = _normalize_game(game)
+    try:
+        score = int(score)
+    except (TypeError, ValueError):
+        raise ValueError("Score must be a number.")
+    if score < 0:
+        raise ValueError("Score must be zero or more.")
+    if score > 100000:
+        raise ValueError("Score is out of range.")
+
+    name = (name or "").strip()[:SCORE_NAME_MAX] or "Anonymous"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    with engine.begin() as conn:
+        result = conn.execute(
+            insert(scores).values(game=game, name=name, score=score, created_at=now)
+        )
+        new_id = result.inserted_primary_key[0]
+
+    board = get_leaderboard(game)
+    rank = None
+    for entry in board:
+        if entry["score"] == score and entry["name"] == name:
+            # The matching entry with the latest timestamp is this submission.
+            rank = entry["rank"]
+            break
+
+    return {"leaderboard": board, "rank": rank, "id": new_id}
