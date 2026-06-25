@@ -288,6 +288,180 @@
         );
     }
 
+    // ---------- funny + tricky word problems ----------
+    function escapeText(s) {
+        var d = document.createElement("span");
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    // Build a 4-option choice list: the answer plus three sensible (often
+    // tempting) wrong answers, deduped, non-negative, shuffled.
+    function buildChoices(answer, distractors) {
+        var seen = {};
+        seen[answer] = true;
+        var out = [answer];
+        distractors.forEach(function (d) {
+            d = Math.round(d);
+            if (d < 0 || seen[d]) return;
+            seen[d] = true;
+            out.push(d);
+        });
+        var guard = 0;
+        while (out.length < 4 && guard < 100) {
+            guard++;
+            var d = answer + rand(-5, 6);
+            if (d < 0 || seen[d]) continue;
+            seen[d] = true;
+            out.push(d);
+        }
+        return shuffle(out.slice(0, 4));
+    }
+
+    var WP_NAMES = [
+        "Sir Wigglesworth", "Captain Noodle", "Princess Pickle", "Gizmo",
+        "Bartholomew", "Lady Bubbles", "Sergeant Sniffles", "Waffles",
+        "Professor Pancake", "Mister Snorts", "Queen Gigglepants", "Ziggy",
+    ];
+    var WP_ANIMALS = [
+        "cat", "goat", "penguin", "llama", "hamster", "octopus", "narwhal",
+        "platypus", "sloth", "raccoon", "dragon", "yak",
+    ];
+
+    // Each template returns { text, answer, distractors }. Numbers are random,
+    // so a fresh problem is generated every single time.
+    var WP_TEMPLATES = [
+        function () {
+            // Paw counting with a sneaky "+1 for the parent" twist.
+            var name = pick(WP_NAMES);
+            var animal = pick(WP_ANIMALS);
+            var babies = rand(2, 6);
+            var answer = (babies + 1) * 4;
+            return {
+                text:
+                    name + " the " + animal + " has " + babies +
+                    " babies. Every " + animal + " has 4 paws \u2014 and don't forget " +
+                    name + "\u2019s own 4 paws! How many paws are there all together?",
+                answer: answer,
+                distractors: [babies * 4, (babies + 1) * 2, babies + 4],
+            };
+        },
+        function () {
+            // Dozens, minus a thief.
+            var name = pick(WP_NAMES);
+            var dozens = rand(2, 4);
+            var eaten = rand(2, 9);
+            var total = dozens * 12;
+            var answer = total - eaten;
+            return {
+                text:
+                    "Grandma baked " + dozens + " dozen cookies. Then " + name +
+                    " the sneaky goblin gobbled up " + eaten +
+                    " of them! How many cookies are left?",
+                answer: answer,
+                distractors: [total, 12 - eaten, dozens * 12 + eaten],
+            };
+        },
+        function () {
+            // Extra irrelevant info you must ignore.
+            var red = rand(6, 15);
+            var blue = rand(6, 15);
+            var dogs = rand(3, 9);
+            var answer = red + blue;
+            return {
+                text:
+                    "A magic bus has " + red + " red seats and " + blue +
+                    " blue seats. Outside, " + dogs +
+                    " dogs are howling at the moon. How many seats are on the bus?",
+                answer: answer,
+                distractors: [red + blue + dogs, red + blue - dogs, dogs],
+            };
+        },
+        function () {
+            // Quarters to cents.
+            var name = pick(WP_NAMES);
+            var q = rand(2, 8);
+            var answer = q * 25;
+            return {
+                text:
+                    name + " found " + q +
+                    " quarters stuck under the sofa cushions. How many CENTS is that? (1 quarter = 25 cents)",
+                answer: answer,
+                distractors: [q * 5, q * 10, q + 25],
+            };
+        },
+        function () {
+            // Split equally between 2 hands.
+            var name = pick(WP_NAMES);
+            var each = rand(3, 9);
+            var total = each * 2;
+            return {
+                text:
+                    name + " the alien squished " + total +
+                    " slime balls and split them equally between both hands. How many slime balls in each hand?",
+                answer: each,
+                distractors: [total, total * 2, each + 2],
+            };
+        },
+        function () {
+            // Repeated time.
+            var animal = pick(WP_ANIMALS);
+            var mins = rand(2, 6);
+            var count = rand(3, 6);
+            var answer = mins * count;
+            return {
+                text:
+                    "It takes " + mins + " minutes to brush one " + animal +
+                    "\u2019s teeth. How many minutes to brush " + count + " " +
+                    animal + "s\u2019 teeth?",
+                answer: answer,
+                distractors: [mins + count, mins * count + mins, mins * (count - 1)],
+            };
+        },
+        function () {
+            // Socks: how many MORE are needed.
+            var name = pick(WP_NAMES);
+            var legs = 8;
+            var pairs = rand(1, 3);
+            var has = pairs * 2;
+            var answer = legs - has;
+            return {
+                text:
+                    name + " the octopus has 8 legs and wants a sock on every leg. " +
+                    "She already owns " + pairs + " pair" + (pairs > 1 ? "s" : "") +
+                    " of socks. How many MORE socks does she need?",
+                answer: answer,
+                distractors: [legs - pairs, has, legs + has],
+            };
+        },
+        function () {
+            // Wheels on tricycles (x3) trick.
+            var trikes = rand(3, 7);
+            var answer = trikes * 3;
+            return {
+                text:
+                    "At the clown parade there are " + trikes +
+                    " tricycles. Each tricycle has 3 wheels. How many wheels are spinning in all?",
+                answer: answer,
+                distractors: [trikes * 2, trikes + 3, trikes * 4],
+            };
+        },
+    ];
+
+    function runPuzzle(body) {
+        runMultipleChoice(body, {
+            makeQuestion: function () {
+                var tmpl = pick(WP_TEMPLATES)();
+                return {
+                    promptHTML:
+                        '<span class="mg-word">' + escapeText(tmpl.text) + "</span>",
+                    answer: tmpl.answer,
+                    choices: buildChoices(tmpl.answer, tmpl.distractors),
+                };
+            },
+        });
+    }
+
     var GAMES = [
         {
             id: "add",
@@ -388,6 +562,16 @@
                         };
                     },
                 });
+            },
+        },
+        {
+            id: "puzzle",
+            title: "Puzzle",
+            emoji: "\uD83E\uDDE9",
+            color: "mg-c-puzzle",
+            desc: "Solve a silly word problem and tap the answer.",
+            run: function (body) {
+                runPuzzle(body);
             },
         },
     ];
