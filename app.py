@@ -106,4 +106,5 @@ def api_post_score():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Bind to 127.0.0.1:8080 for local preview (avoids default port 5000 conflicts).
+    app.run(debug=True, host="127.0.0.1", port=8080)
