@@ -40,6 +40,24 @@ GAME_MAX = 20
 VALID_GAMES = {"add", "sub", "ten", "skip", "times", "puzzle"}
 
 
+def _sqlite_path():
+    """Return the on-disk path for the local SQLite database.
+
+    On Azure App Service the deployed code lives in ``wwwroot``, which is
+    replaced on every deployment -- so a SQLite file kept next to this module
+    would be wiped each time we ship. App Service mounts ``/home`` as
+    persistent storage that survives deployments and restarts, so when we
+    detect that environment we keep the database under ``/home/data`` instead.
+    Locally (no ``WEBSITE_INSTANCE_ID``) we use the module directory so dev
+    works with no setup.
+    """
+    if os.environ.get("WEBSITE_INSTANCE_ID"):
+        data_dir = os.path.join(os.environ.get("HOME", "/home"), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.join(data_dir, "chat.db")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat.db")
+
+
 def _engine_url():
     """Build the SQLAlchemy URL from the environment.
 
@@ -49,8 +67,7 @@ def _engine_url():
     """
     conn = (os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING") or "").strip()
     if not conn:
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat.db")
-        return f"sqlite:///{path}"
+        return f"sqlite:///{_sqlite_path()}"
 
     if conn.startswith("postgres://") or conn.startswith("postgresql://"):
         # Normalize to the psycopg (v3) driver SQLAlchemy expects.
