@@ -33,15 +33,62 @@
 
     var PRAISE = ["Nice!", "Great job!", "You got it!", "Awesome!", "Way to go!", "Correct!"];
     var ROUNDS = 10;
+    var CHALLENGE_SECONDS = 30;
+
+    // ---------- mode state (Practice vs Challenge) ----------
+    var MODE_KEY = "mg_mode";
+    function getMode() {
+        try {
+            return localStorage.getItem(MODE_KEY) === "challenge" ? "challenge" : "practice";
+        } catch (e) {
+            return "practice";
+        }
+    }
+    function setMode(mode) {
+        try {
+            localStorage.setItem(MODE_KEY, mode);
+        } catch (e) {
+            /* ignore storage errors */
+        }
+    }
+
+    // A single active countdown is tracked so navigating away cancels it.
+    var activeTimer = null;
+    function clearActiveTimer() {
+        if (activeTimer) {
+            clearInterval(activeTimer);
+            activeTimer = null;
+        }
+    }
+    function startCountdown(seconds, onTick, onDone) {
+        clearActiveTimer();
+        var remaining = seconds;
+        onTick(remaining);
+        activeTimer = setInterval(function () {
+            remaining--;
+            if (remaining <= 0) {
+                clearActiveTimer();
+                onTick(0);
+                onDone();
+            } else {
+                onTick(remaining);
+            }
+        }, 1000);
+    }
 
     // ---------- shared multiple-choice engine ----------
     // config: { makeQuestion() -> {promptHTML, answer}, spread, choices }
-    function runMultipleChoice(body, config) {
+    // mode: "practice" (10 questions, first-try stars) or
+    //       "challenge" (unlimited questions, score = correct answers in 30s).
+    function runMultipleChoice(body, config, mode) {
+        mode = mode || "practice";
+        var challenge = mode === "challenge";
         var spread = config.spread || 6;
         var choiceCount = config.choices || 4;
         var score = 0;
         var round = 0;
         var firstTry = true;
+        var over = false;
 
         var progress = el("div", "mg-progress");
         var stars = el("div", "mg-stars");
@@ -66,16 +113,24 @@
             return shuffle(out);
         }
 
-        function renderStars() {
-            stars.textContent = score > 0 ? Array(score + 1).join("\u2B50") : "";
+        function renderStatus(remaining) {
+            if (challenge) {
+                if (remaining != null) {
+                    progress.textContent = "\u23F1\uFE0F " + remaining + "s left";
+                }
+                stars.textContent = "Score: " + score;
+            } else {
+                stars.textContent = score > 0 ? Array(score + 1).join("\u2B50") : "";
+            }
         }
 
         function next() {
-            if (round >= ROUNDS) return finish();
+            if (over) return;
+            if (!challenge && round >= ROUNDS) return finish();
             round++;
             firstTry = true;
-            progress.textContent = "Question " + round + " of " + ROUNDS;
-            renderStars();
+            if (!challenge) progress.textContent = "Question " + round + " of " + ROUNDS;
+            renderStatus();
             var q = config.makeQuestion();
             prompt.innerHTML = q.promptHTML;
             feedback.textContent = "";
@@ -86,17 +141,17 @@
                 var b = el("button", "mg-choice", String(val));
                 b.type = "button";
                 b.addEventListener("click", function () {
-                    if (b.disabled) return;
+                    if (b.disabled || over) return;
                     if (val === q.answer) {
                         b.classList.add("correct");
                         Array.prototype.forEach.call(choices.children, function (c) {
                             c.disabled = true;
                         });
-                        if (firstTry) score++;
+                        if (challenge || firstTry) score++;
                         feedback.textContent = pick(PRAISE);
-                        feedback.classList.add("good");
-                        renderStars();
-                        setTimeout(next, 850);
+                        feedback.className = "mg-feedback good";
+                        renderStatus();
+                        setTimeout(next, challenge ? 350 : 850);
                     } else {
                         firstTry = false;
                         b.classList.add("wrong");
@@ -110,33 +165,55 @@
         }
 
         function finish() {
+            clearActiveTimer();
             body.innerHTML = "";
             var done = el("div", "mg-done");
-            done.append(
-                el("div", "mg-done-emoji", score >= 8 ? "\uD83C\uDFC6" : "\uD83C\uDF89"),
-                el("div", "mg-done-title", "All done!"),
-                el("div", "mg-done-score", "You earned " + score + " of " + ROUNDS + " stars on the first try.")
-            );
+            if (challenge) {
+                done.append(
+                    el("div", "mg-done-emoji", "\u23F1\uFE0F"),
+                    el("div", "mg-done-title", "Time's up!"),
+                    el("div", "mg-done-score",
+                        "You got " + score + " correct in " + CHALLENGE_SECONDS + " seconds!")
+                );
+            } else {
+                done.append(
+                    el("div", "mg-done-emoji", score >= 8 ? "\uD83C\uDFC6" : "\uD83C\uDF89"),
+                    el("div", "mg-done-title", "All done!"),
+                    el("div", "mg-done-score",
+                        "You earned " + score + " of " + ROUNDS + " stars on the first try.")
+                );
+            }
             var again = el("button", "mg-btn", "Play again");
             again.type = "button";
             again.addEventListener("click", function () {
                 body.innerHTML = "";
-                runMultipleChoice(body, config);
+                runMultipleChoice(body, config, mode);
             });
             done.append(again);
             body.append(done);
         }
 
+        if (challenge) {
+            startCountdown(CHALLENGE_SECONDS, function (remaining) {
+                renderStatus(remaining);
+            }, function () {
+                over = true;
+                finish();
+            });
+        }
         next();
     }
 
     // ---------- Make Ten (number bonds, custom tap game) ----------
-    function runMakeTen(body) {
+    function runMakeTen(body, mode) {
+        mode = mode || "practice";
+        var challenge = mode === "challenge";
         var TARGET = 10;
-        var GOAL = 8; // pairs to find to win
+        var GOAL = 8; // pairs to find to win (practice mode)
         var found = 0;
         var nums = [];
         var first = null;
+        var over = false;
 
         var progress = el("div", "mg-progress");
         var prompt = el("div", "mg-prompt", "Tap two cards that add up to <small>10</small>");
@@ -173,8 +250,13 @@
             }
         }
 
-        function updateProgress() {
-            progress.textContent = "Pairs found: " + found + " of " + GOAL;
+        function updateProgress(remaining) {
+            if (challenge) {
+                var time = remaining != null ? remaining : CHALLENGE_SECONDS;
+                progress.textContent = "\u23F1\uFE0F " + time + "s left  \u2022  Score: " + found;
+            } else {
+                progress.textContent = "Pairs found: " + found + " of " + GOAL;
+            }
         }
 
         function render() {
@@ -195,6 +277,7 @@
         }
 
         function onTap(idx, tile) {
+            if (over) return;
             if (tile.classList.contains("hit")) return;
             if (first === null) {
                 first = idx;
@@ -219,14 +302,15 @@
                 updateProgress();
                 var a = first, b = idx;
                 first = null;
-                if (found >= GOAL) {
+                if (!challenge && found >= GOAL) {
                     setTimeout(win, 700);
                     return;
                 }
                 setTimeout(function () {
+                    if (over) return;
                     refillSlots(a, b);
                     render();
-                }, 650);
+                }, challenge ? 350 : 650);
             } else {
                 firstTile.classList.add("miss");
                 tile.classList.add("miss");
@@ -243,6 +327,7 @@
         }
 
         function win() {
+            clearActiveTimer();
             body.innerHTML = "";
             var done = el("div", "mg-done");
             done.append(
@@ -254,7 +339,27 @@
             again.type = "button";
             again.addEventListener("click", function () {
                 body.innerHTML = "";
-                runMakeTen(body);
+                runMakeTen(body, mode);
+            });
+            done.append(again);
+            body.append(done);
+        }
+
+        function timeUp() {
+            over = true;
+            body.innerHTML = "";
+            var done = el("div", "mg-done");
+            done.append(
+                el("div", "mg-done-emoji", "\u23F1\uFE0F"),
+                el("div", "mg-done-title", "Time's up!"),
+                el("div", "mg-done-score",
+                    "You made " + found + " pairs in " + CHALLENGE_SECONDS + " seconds!")
+            );
+            var again = el("button", "mg-btn", "Play again");
+            again.type = "button";
+            again.addEventListener("click", function () {
+                body.innerHTML = "";
+                runMakeTen(body, mode);
             });
             done.append(again);
             body.append(done);
@@ -263,6 +368,11 @@
         nums = generate();
         updateProgress();
         render();
+        if (challenge) {
+            startCountdown(CHALLENGE_SECONDS, function (remaining) {
+                updateProgress(remaining);
+            }, timeUp);
+        }
     }
 
     // ---------- game definitions ----------
@@ -448,7 +558,7 @@
         },
     ];
 
-    function runPuzzle(body) {
+    function runPuzzle(body, mode) {
         runMultipleChoice(body, {
             makeQuestion: function () {
                 var tmpl = pick(WP_TEMPLATES)();
@@ -459,7 +569,7 @@
                     choices: buildChoices(tmpl.answer, tmpl.distractors),
                 };
             },
-        });
+        }, mode);
     }
 
     var GAMES = [
@@ -469,7 +579,7 @@
             emoji: "\u2795",
             color: "mg-c-add",
             desc: "Add the numbers and tap the answer.",
-            run: function (body) {
+            run: function (body, mode) {
                 runMultipleChoice(body, {
                     spread: 6,
                     makeQuestion: function () {
@@ -477,7 +587,7 @@
                         var b = rand(2, 20);
                         return { promptHTML: a + " + " + b, answer: a + b };
                     },
-                });
+                }, mode);
             },
         },
         {
@@ -486,7 +596,7 @@
             emoji: "\u2796",
             color: "mg-c-sub",
             desc: "Subtract and tap what is left.",
-            run: function (body) {
+            run: function (body, mode) {
                 runMultipleChoice(body, {
                     spread: 6,
                     makeQuestion: function () {
@@ -494,7 +604,7 @@
                         var b = rand(1, a - 1);
                         return { promptHTML: a + " \u2212 " + b, answer: a - b };
                     },
-                });
+                }, mode);
             },
         },
         {
@@ -503,8 +613,8 @@
             emoji: "\uD83D\uDD1F",
             color: "mg-c-ten",
             desc: "Tap two cards that add up to 10.",
-            run: function (body) {
-                runMakeTen(body);
+            run: function (body, mode) {
+                runMakeTen(body, mode);
             },
         },
         {
@@ -513,7 +623,7 @@
             emoji: "\uD83D\uDC63",
             color: "mg-c-skip",
             desc: "Find the missing number in the count.",
-            run: function (body) {
+            run: function (body, mode) {
                 runMultipleChoice(body, {
                     spread: 0,
                     makeQuestion: function () {
@@ -539,7 +649,7 @@
                         };
                     },
                     choices: 4,
-                });
+                }, mode);
             },
         },
         {
@@ -548,7 +658,7 @@
             emoji: "\u2716\uFE0F",
             color: "mg-c-times",
             desc: "Count the dots to find the product.",
-            run: function (body) {
+            run: function (body, mode) {
                 runMultipleChoice(body, {
                     spread: 4,
                     makeQuestion: function () {
@@ -561,7 +671,7 @@
                             answer: rows * cols,
                         };
                     },
-                });
+                }, mode);
             },
         },
         {
@@ -570,15 +680,55 @@
             emoji: "\uD83E\uDDE9",
             color: "mg-c-puzzle",
             desc: "Solve a silly word problem and tap the answer.",
-            run: function (body) {
-                runPuzzle(body);
+            run: function (body, mode) {
+                runPuzzle(body, mode);
             },
         },
     ];
 
     // ---------- gallery / stage navigation ----------
+    function buildModeBar(onChange) {
+        var bar = el("div", "mg-modebar");
+        var current = getMode();
+        var modes = [
+            { id: "practice", label: "Practice", emoji: "\uD83C\uDF1F" },
+            { id: "challenge", label: "Challenge", emoji: "\u23F1\uFE0F" },
+        ];
+        var buttons = {};
+        modes.forEach(function (m) {
+            var b = el("button", "mg-mode-btn", m.emoji + " " + m.label);
+            b.type = "button";
+            if (m.id === current) b.classList.add("active");
+            b.addEventListener("click", function () {
+                if (getMode() === m.id) return;
+                setMode(m.id);
+                modes.forEach(function (mm) {
+                    buttons[mm.id].classList.toggle("active", mm.id === m.id);
+                });
+                if (onChange) onChange(m.id);
+            });
+            buttons[m.id] = b;
+            bar.append(b);
+        });
+        return bar;
+    }
+
     function showGallery() {
+        clearActiveTimer();
         root.innerHTML = "";
+        var top = el("div", "mg-toolbar");
+        var hint = el("span", "mg-mode-hint",
+            getMode() === "challenge"
+                ? "Race the clock \u2014 30 seconds, unlimited questions!"
+                : "Take your time \u2014 no clock, just practice.");
+        var modebar = buildModeBar(function (m) {
+            hint.textContent = m === "challenge"
+                ? "Race the clock \u2014 30 seconds, unlimited questions!"
+                : "Take your time \u2014 no clock, just practice.";
+        });
+        top.append(hint, modebar);
+        root.append(top);
+
         var gallery = el("div", "mg-gallery");
         GAMES.forEach(function (game) {
             var card = el("button", "mg-card " + game.color);
@@ -599,13 +749,17 @@
     }
 
     function showGame(game) {
+        clearActiveTimer();
+        var mode = getMode();
         root.innerHTML = "";
         var stage = el("div", "mg-stage");
         var bar = el("div", "mg-stage-bar");
         var back = el("button", "mg-back", "\u2190 All games");
         back.type = "button";
         back.addEventListener("click", showGallery);
-        bar.append(back, el("span", "mg-stage-title", game.emoji + "  " + game.title));
+        var badge = el("span", "mg-stage-mode " + (mode === "challenge" ? "is-challenge" : "is-practice"),
+            mode === "challenge" ? "\u23F1\uFE0F Challenge" : "\uD83C\uDF1F Practice");
+        bar.append(back, el("span", "mg-stage-title", game.emoji + "  " + game.title), badge);
         var stageBody = el("div", "mg-stage-body");
         stage.append(bar, stageBody);
         root.append(stage);
@@ -615,7 +769,7 @@
         var top = root.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: top, behavior: "smooth" });
 
-        game.run(stageBody);
+        game.run(stageBody, mode);
     }
 
     showGallery();
