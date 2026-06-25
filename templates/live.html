@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live | Phu &amp; Peter Le</title>
+    <meta name="description" content="Live — a public chat room on the Phu &amp; Peter Le website.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/site/site.css">
+    <link rel="stylesheet" href="/static/site/custom.css">
+    <link rel="stylesheet" href="/static/site/live.css">
+</head>
+<body>
+<div id="root">
+    <div class="min-h-screen flex flex-col">
+        {% include "_header.html" %}
+
+        <main class="flex-grow pt-16">
+            <section class="py-16 bg-white">
+                <div class="section-container">
+                    <div class="text-center mb-8">
+                        <h2 class="section-title">Live</h2>
+                        <p class="section-subtitle">A public chat room &mdash; no sign-in needed, just pick a name and say hello</p>
+                    </div>
+
+                    <div id="chat" class="chat" aria-live="polite">
+                        <div class="chat-namebar">
+                            <span class="chat-name-label">Chatting as <strong id="chat-name">&hellip;</strong></span>
+                            <button type="button" id="chat-change" class="chat-link">Change name</button>
+                        </div>
+
+                        <div id="chat-messages" class="chat-messages" role="log"></div>
+
+                        <form id="chat-form" class="chat-form" autocomplete="off">
+                            <input id="chat-input" class="chat-input" type="text" name="body"
+                                   maxlength="1000" placeholder="Type a message&hellip;" aria-label="Message">
+                            <button type="submit" id="chat-send" class="chat-send">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-bamboo-dark text-white">
+            <div class="container mx-auto px-4 py-12">
+                <div class="border-t border-bamboo pt-8 text-center text-sm">
+                    <p>&copy; 2026 Phu &amp; Peter Le. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Name picker overlay -->
+<div id="name-modal" class="name-modal" hidden>
+    <div class="name-card">
+        <h3 class="name-title">Choose a name</h3>
+        <p class="name-sub">This is how others will see you in the chat. You can change it anytime.</p>
+        <form id="name-form" autocomplete="off">
+            <input id="name-input" class="name-input" type="text" maxlength="40"
+                   placeholder="Your name" aria-label="Your name">
+            <button type="submit" class="mg-btn name-save">Start chatting</button>
+        </form>
+    </div>
+</div>
+
+<script src="/static/site/nav.js" defer></script>
+<script src="/static/site/live.js" defer></script>
+</body>
+</html>
