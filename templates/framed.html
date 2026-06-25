@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} | Phu &amp; Peter Le</title>
+    <meta name="description" content="{{ page_title }} — a page on the Phu &amp; Peter Le website.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/site/site.css">
+    <link rel="stylesheet" href="/static/site/custom.css">
+    <style>
+        .framed-page {
+            display: block;
+            width: 100%;
+            border: 0;
+            min-height: 60vh;
+        }
+    </style>
+</head>
+<body>
+<div id="root">
+    <div class="min-h-screen flex flex-col">
+        {% include "_header.html" %}
+
+        <main class="flex-grow pt-16">
+            <iframe id="framed-page" class="framed-page" src="{{ frame_src }}" title="{{ page_title }}"></iframe>
+        </main>
+
+        <footer class="bg-bamboo-dark text-white">
+            <div class="container mx-auto px-4 py-12">
+                <div class="border-t border-bamboo pt-8 text-center text-sm">
+                    <p>&copy; 2026 Phu &amp; Peter Le. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+<script src="/static/site/nav.js" defer></script>
+<script>
+    // Auto-size the embedded iframe to its content height so the page scrolls
+    // as one (no nested scrollbar). Same-origin, so this is safe.
+    (function () {
+        var frame = document.getElementById("framed-page");
+        if (!frame) return;
+        function resize() {
+            try {
+                var doc = frame.contentDocument || frame.contentWindow.document;
+                if (doc && doc.body) {
+                    frame.style.height = doc.body.scrollHeight + "px";
+                }
+            } catch (e) { /* ignore cross-origin */ }
+        }
+        frame.addEventListener("load", resize);
+        window.addEventListener("resize", resize);
+    })();
+</script>
+</body>
+</html>

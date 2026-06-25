@@ -5,8 +5,10 @@
             <span class="text-lg md:text-xl font-display font-bold text-bamboo-dark">Phu &amp; Peter Le</span>
         </a>
         <nav class="hidden md:flex items-center space-x-8">
-            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'home' %} font-semibold text-bamboo-dark{% endif %}" href="/">Home</a>
-            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'math' %} font-semibold text-bamboo-dark{% endif %}" href="/math">Math</a>
+            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'home' %} font-semibold text-bamboo-dark{% endif %}" href="/">Phu</a>
+            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'math' %} font-semibold text-bamboo-dark{% endif %}" href="/patrick">Patrick</a>
+            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'peter' %} font-semibold text-bamboo-dark{% endif %}" href="/peter">Peter</a>
+            <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'khanh' %} font-semibold text-bamboo-dark{% endif %}" href="/khanh">Khanh</a>
             <a class="text-foreground hover:text-bamboo-dark transition-colors{% if active == 'live' %} font-semibold text-bamboo-dark{% endif %}" href="/live">Live</a>
         </nav>
         <button id="menu-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 md:hidden">
@@ -14,8 +16,10 @@
         </button>
     </div>
     <div id="mobile-menu" class="md:hidden">
-        <a href="/"{% if active == 'home' %} class="active"{% endif %}>Home</a>
-        <a href="/math"{% if active == 'math' %} class="active"{% endif %}>Math</a>
+        <a href="/"{% if active == 'home' %} class="active"{% endif %}>Phu</a>
+        <a href="/patrick"{% if active == 'math' %} class="active"{% endif %}>Patrick</a>
+        <a href="/peter"{% if active == 'peter' %} class="active"{% endif %}>Peter</a>
+        <a href="/khanh"{% if active == 'khanh' %} class="active"{% endif %}>Khanh</a>
         <a href="/live"{% if active == 'live' %} class="active"{% endif %}>Live</a>
     </div>
 </header>

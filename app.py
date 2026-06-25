@@ -5,7 +5,7 @@ and Azure App Service (Linux) behind Gunicorn; the WSGI entry point is the
 module-level ``app`` object, so ``gunicorn app:app`` works with no extra config.
 """
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request
 
 import db
 
@@ -18,9 +18,39 @@ def index():
     return render_template("index.html", active="home")
 
 
+@app.route("/patrick")
+def patrick():
+    return render_template("math.html", active="math")
+
+
 @app.route("/math")
 def math():
-    return render_template("math.html", active="math")
+    # Old path kept as a permanent redirect so existing links still work.
+    return redirect("/patrick", code=301)
+
+
+@app.route("/peter")
+def peter():
+    return render_template(
+        "framed.html", active="peter", page_title="Peter", frame_src="/peter/home"
+    )
+
+
+@app.route("/peter/home")
+def peter_home():
+    return render_template("peter_home.html")
+
+
+@app.route("/khanh")
+def khanh():
+    return render_template(
+        "framed.html", active="khanh", page_title="Khanh", frame_src="/khanh/home"
+    )
+
+
+@app.route("/khanh/home")
+def khanh_home():
+    return render_template("khanh_home.html")
 
 
 @app.route("/live")
