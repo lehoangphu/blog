@@ -74,6 +74,27 @@
                 onTick(remaining);
             }
         }, 1000);
+        return {
+            addTime: function (extra) {
+                remaining += extra;
+                onTick(remaining);
+            },
+        };
+    }
+
+    // Floating "+1s" reward shown on the timer when a bonus second is earned.
+    function showTimeBonus(progressEl) {
+        if (!progressEl) return;
+        var bonus = el("span", "mg-timebonus", "\u2B50 +1s");
+        progressEl.append(bonus);
+        var remove = function () {
+            if (bonus.parentNode) bonus.parentNode.removeChild(bonus);
+        };
+        bonus.addEventListener("animationend", remove);
+        setTimeout(remove, 1200);
+        progressEl.classList.remove("mg-bonus-pulse");
+        void progressEl.offsetWidth; // force reflow so the pulse restarts
+        progressEl.classList.add("mg-bonus-pulse");
     }
 
     // ---------- shared multiple-choice engine ----------
@@ -97,6 +118,14 @@
         var feedback = el("div", "mg-feedback");
         body.append(progress, stars, prompt, choices, feedback);
 
+        var countdown = null;
+        var progressText = null;
+        if (challenge) {
+            progress.classList.add("mg-timer");
+            progressText = el("span", "mg-progress-text");
+            progress.append(progressText);
+        }
+
         function distractors(answer) {
             var set = {};
             set[answer] = true;
@@ -115,8 +144,8 @@
 
         function renderStatus(remaining) {
             if (challenge) {
-                if (remaining != null) {
-                    progress.textContent = "\u23F1\uFE0F " + remaining + "s left";
+                if (remaining != null && progressText) {
+                    progressText.textContent = "\u23F1\uFE0F " + remaining + "s left";
                 }
                 stars.textContent = "Score: " + score;
             } else {
@@ -147,7 +176,13 @@
                         Array.prototype.forEach.call(choices.children, function (c) {
                             c.disabled = true;
                         });
-                        if (challenge || firstTry) score++;
+                        if (firstTry) {
+                            score++;
+                            if (challenge && countdown) {
+                                countdown.addTime(1);
+                                showTimeBonus(progress);
+                            }
+                        }
                         feedback.textContent = pick(PRAISE);
                         feedback.className = "mg-feedback good";
                         renderStatus();
@@ -194,7 +229,7 @@
         }
 
         if (challenge) {
-            startCountdown(CHALLENGE_SECONDS, function (remaining) {
+            countdown = startCountdown(CHALLENGE_SECONDS, function (remaining) {
                 renderStatus(remaining);
             }, function () {
                 over = true;
@@ -214,12 +249,17 @@
         var nums = [];
         var first = null;
         var over = false;
+        var countdown = null;
 
         var progress = el("div", "mg-progress");
         var prompt = el("div", "mg-prompt", "Tap two cards that add up to <small>10</small>");
         var board = el("div", "mg-board");
         var feedback = el("div", "mg-feedback");
         body.append(progress, prompt, board, feedback);
+
+        var progressText = el("span", "mg-progress-text");
+        if (challenge) progress.classList.add("mg-timer");
+        progress.append(progressText);
 
         function hasPair(list) {
             for (var i = 0; i < list.length; i++) {
@@ -253,9 +293,9 @@
         function updateProgress(remaining) {
             if (challenge) {
                 var time = remaining != null ? remaining : CHALLENGE_SECONDS;
-                progress.textContent = "\u23F1\uFE0F " + time + "s left  \u2022  Score: " + found;
+                progressText.textContent = "\u23F1\uFE0F " + time + "s left  \u2022  Score: " + found;
             } else {
-                progress.textContent = "Pairs found: " + found + " of " + GOAL;
+                progressText.textContent = "Pairs found: " + found + " of " + GOAL;
             }
         }
 
@@ -299,6 +339,10 @@
                 feedback.textContent = nums[first] + " + " + nums[idx] + " = 10  " + pick(PRAISE);
                 feedback.className = "mg-feedback good";
                 found++;
+                if (challenge && countdown) {
+                    countdown.addTime(1);
+                    showTimeBonus(progress);
+                }
                 updateProgress();
                 var a = first, b = idx;
                 first = null;
@@ -369,7 +413,7 @@
         updateProgress();
         render();
         if (challenge) {
-            startCountdown(CHALLENGE_SECONDS, function (remaining) {
+            countdown = startCountdown(CHALLENGE_SECONDS, function (remaining) {
                 updateProgress(remaining);
             }, timeUp);
         }

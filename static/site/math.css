@@ -166,9 +166,35 @@
 
 /* shared play-area pieces */
 .mg-progress {
+    position: relative;
     font-weight: 600;
     color: #6b6258;
     letter-spacing: 0.01em;
+}
+.mg-progress.mg-timer { display: inline-block; }
+.mg-timebonus {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    margin-left: 0.5rem;
+    transform: translateY(-50%);
+    color: #2f7d4f;
+    font-weight: 800;
+    font-size: 1rem;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: mg-bonus-float 1s ease-out forwards;
+}
+.mg-bonus-pulse { animation: mg-timer-pulse 0.5s ease; }
+@keyframes mg-bonus-float {
+    0% { opacity: 0; transform: translateY(-50%) translateX(-0.3rem) scale(0.7); }
+    25% { opacity: 1; transform: translateY(-90%) translateX(0) scale(1.15); }
+    100% { opacity: 0; transform: translateY(-180%) translateX(0.2rem) scale(1); }
+}
+@keyframes mg-timer-pulse {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.16); color: #2f7d4f; }
+    100% { transform: scale(1); }
 }
 .mg-stars {
     font-size: 1.4rem;
@@ -346,6 +372,8 @@
 @media (prefers-reduced-motion: reduce) {
     .mg-choice, .mg-tile, .mg-card, .mg-back, .mg-btn { transition: none; }
     .mg-choice.correct, .mg-choice.wrong, .mg-tile.hit, .mg-tile.miss { animation: none; }
+    .mg-timebonus { animation: none; opacity: 1; }
+    .mg-bonus-pulse { animation: none; }
 }
 
 @media (max-width: 480px) {
