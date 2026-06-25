@@ -55,6 +55,149 @@
 .mg-stage-mode.is-practice { background: #e8f3ea; color: #2f7d4f; }
 .mg-stage-mode.is-challenge { background: #fdeede; color: #b46a16; }
 
+.mg-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.mg-lb-open {
+    border: 1px solid var(--mg-line);
+    background: #fff;
+    color: var(--mg-ink);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.18s ease, box-shadow 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-lb-open:hover { background: #faf7f2; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.mg-lb-open:active { transform: scale(0.97); }
+
+/* ---------- Leaderboards ---------- */
+.mg-lb-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+.mg-lb-tab {
+    border: 1px solid var(--mg-line);
+    background: #fff;
+    color: #6b6258;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mg-lb-tab:hover { color: var(--mg-ink); }
+.mg-lb-tab.active {
+    background: var(--mg-ink);
+    border-color: var(--mg-ink);
+    color: #fff;
+}
+.mg-lb-board { width: 100%; max-width: 460px; }
+.mg-lb-loading, .mg-lb-empty {
+    text-align: center;
+    color: #6b6258;
+    padding: 1.5rem 0;
+}
+.mg-lb-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.mg-lb-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    background: #fff;
+    border: 1px solid var(--mg-line);
+    border-radius: 0.7rem;
+}
+.mg-lb-row.is-you {
+    background: #fff6e6;
+    border-color: #f0c46b;
+    box-shadow: 0 2px 8px rgba(214, 158, 46, 0.18);
+}
+.mg-lb-rank {
+    flex: 0 0 2rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--mg-ink);
+}
+.mg-lb-name {
+    flex: 1 1 auto;
+    font-weight: 600;
+    color: var(--mg-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mg-lb-score {
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: #b46a16;
+    font-variant-numeric: tabular-nums;
+}
+
+/* end-of-challenge actions + name entry */
+.mg-done-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+}
+.mg-btn-ghost {
+    background: #fff;
+    color: var(--mg-ink);
+    border: 1px solid var(--mg-line);
+}
+.mg-lb-formwrap { width: 100%; max-width: 420px; }
+.mg-lb-congrats {
+    text-align: center;
+    font-weight: 700;
+    color: #2f7d4f;
+    margin-bottom: 0.6rem;
+}
+.mg-lb-form {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+.mg-lb-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--mg-line);
+    border-radius: 0.6rem;
+    font-size: 1rem;
+    font-family: inherit;
+}
+.mg-lb-input:focus {
+    outline: none;
+    border-color: #f0c46b;
+    box-shadow: 0 0 0 3px rgba(240, 196, 107, 0.3);
+}
+.mg-lb-note {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #6b6258;
+    margin-top: 0.4rem;
+    min-height: 1rem;
+}
+.mg-lb-note.bad { color: #b3261e; }
+
 
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
