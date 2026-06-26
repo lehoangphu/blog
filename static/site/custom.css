@@ -20,6 +20,39 @@
     width: 1.25rem;
 }
 
+/* Desktop nav links: give each a full "pill" so the whole button -- not just
+   the text -- lights up on hover/active, and keep the label readable on every
+   backdrop. Default colors assume a light backdrop (inner pages, or any page
+   once the header turns solid white on scroll). */
+#site-header nav a {
+    padding: 0.45rem 0.95rem;
+    border-radius: 9999px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+#site-header nav a:hover {
+    background-color: rgba(107, 142, 35, 0.12);
+    color: #5a7a1e;
+}
+#site-header nav a.font-semibold {
+    background-color: rgba(107, 142, 35, 0.14);
+}
+
+/* Home page only: while the header is still transparent over the dark hero,
+   switch the nav to white text with a soft shadow, and use a translucent
+   white pill on hover/active so it stays visible against the photo. */
+#site-header.has-hero:not(.is-scrolled) nav a {
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+#site-header.has-hero:not(.is-scrolled) nav a:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+}
+#site-header.has-hero:not(.is-scrolled) nav a.font-semibold {
+    background-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
 /* Collapsible (mobile) menu revealed by the hamburger toggle. */
 #mobile-menu {
     display: none;
