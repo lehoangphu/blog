@@ -44,12 +44,45 @@ jobs:
     permissions:
       id-token: write   # required for requesting the OIDC JWT
       contents: read
+    env:
+      APP_BASE_URL: https://phublog-g0gfarcybha4h0df.westus3-01.azurewebsites.net
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v8
         with:
           name: python-app
+
+      - name: Back up production data (pre-deploy)
+        id: backup
+        run: |
+          set -euo pipefail
+          mkdir -p data-backup
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          echo "$stamp" > data-backup/_timestamp.txt
+
+          # Snapshot the live chat messages.
+          curl -fsS --max-time 30 "$APP_BASE_URL/api/messages" -o data-backup/messages.json
+          msg_count="$(jq 'length' data-backup/messages.json)"
+
+          # Snapshot every game's leaderboard.
+          score_count=0
+          for g in add sub ten skip times puzzle; do
+            curl -fsS --max-time 30 "$APP_BASE_URL/api/scores/$g" -o "data-backup/scores_$g.json"
+            c="$(jq '.leaderboard | length' "data-backup/scores_$g.json")"
+            score_count=$((score_count + c))
+          done
+
+          echo "msg_count=$msg_count" >> "$GITHUB_OUTPUT"
+          echo "score_count=$score_count" >> "$GITHUB_OUTPUT"
+          echo "Backed up $msg_count message(s) and $score_count leaderboard entr(ies) at $stamp."
+
+      - name: Upload data backup
+        uses: actions/upload-artifact@v7
+        with:
+          name: prod-data-backup-${{ github.run_id }}
+          path: data-backup/
+          retention-days: 90
 
       - name: Login to Azure
         uses: azure/login@v3
@@ -64,3 +97,43 @@ jobs:
         with:
           app-name: 'phublog'
           slot-name: 'Production'
+
+      - name: Verify production data survived (post-deploy)
+        run: |
+          set -euo pipefail
+
+          # Wait for the freshly deployed container to warm up before checking.
+          after_msg=""
+          for i in $(seq 1 12); do
+            if curl -fsS --max-time 30 "$APP_BASE_URL/api/messages" -o after_messages.json; then
+              after_msg="$(jq 'length' after_messages.json)"
+              break
+            fi
+            echo "App not ready yet (attempt $i); retrying in 10s..."
+            sleep 10
+          done
+          if [ -z "$after_msg" ]; then
+            echo "::error::App did not become reachable after deployment; could not verify data."
+            exit 1
+          fi
+
+          after_scores=0
+          for g in add sub ten skip times puzzle; do
+            curl -fsS --max-time 30 "$APP_BASE_URL/api/scores/$g" -o "after_scores_$g.json"
+            c="$(jq '.leaderboard | length' "after_scores_$g.json")"
+            after_scores=$((after_scores + c))
+          done
+
+          before_msg="${{ steps.backup.outputs.msg_count }}"
+          before_scores="${{ steps.backup.outputs.score_count }}"
+          echo "Before deploy: $before_msg message(s) / $before_scores leaderboard entr(ies)"
+          echo "After  deploy: $after_msg message(s) / $after_scores leaderboard entr(ies)"
+
+          # Data may only grow (new entries during deploy are fine); any shrink
+          # means rows were lost -- fail loudly so it is caught immediately.
+          if [ "$after_msg" -lt "$before_msg" ] || [ "$after_scores" -lt "$before_scores" ]; then
+            echo "::error::Production data shrank after deployment -- possible data loss! Restore from the 'prod-data-backup-${{ github.run_id }}' artifact."
+            exit 1
+          fi
+          echo "✅ Production data intact after deployment."
+
