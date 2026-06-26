@@ -72,8 +72,11 @@ def _sqlite_path():
     module_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat.db")
 
     if _on_app_service():
-        home = os.environ.get("HOME") or "/home"
-        data_dir = os.path.join(home, "data")
+        # Azure App Service Linux mounts persistent storage (Azure Files) at the
+        # literal path ``/home``. Do NOT use the ``HOME`` environment variable --
+        # on App Service it points at ``/root``, which is on the container's
+        # ephemeral layer and is wiped on every deployment/restart.
+        data_dir = "/home/data"
         try:
             os.makedirs(data_dir, exist_ok=True)
             # Confirm the directory is actually writable before committing to it.
