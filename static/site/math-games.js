@@ -31,6 +31,53 @@
         return n;
     }
 
+    // ---------- sound effects ----------
+    // Synthesized with the Web Audio API so there are no asset files to ship.
+    // A bright two-note arpeggio means "correct"; a short low buzz means "wrong".
+    var _audioCtx = null;
+    function audioCtx() {
+        if (_audioCtx) return _audioCtx;
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        try {
+            _audioCtx = new AC();
+        } catch (e) {
+            _audioCtx = null;
+        }
+        return _audioCtx;
+    }
+    function tone(ctx, freq, startAt, duration, type, peak) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type || "sine";
+        osc.frequency.value = freq;
+        var t0 = ctx.currentTime + startAt;
+        var vol = peak == null ? 0.18 : peak;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + duration + 0.02);
+    }
+    function playSound(kind) {
+        var ctx = audioCtx();
+        if (!ctx) return;
+        if (ctx.state === "suspended") {
+            try { ctx.resume(); } catch (e) {}
+        }
+        if (kind === "correct") {
+            // Rising major third + fifth: cheerful "ding-ding".
+            tone(ctx, 660, 0, 0.16, "sine", 0.18);
+            tone(ctx, 990, 0.1, 0.22, "sine", 0.16);
+        } else {
+            // Short descending buzz: gentle "uh-oh".
+            tone(ctx, 200, 0, 0.22, "sawtooth", 0.12);
+            tone(ctx, 150, 0.08, 0.22, "sawtooth", 0.1);
+        }
+    }
+
     var PRAISE = ["Nice!", "Great job!", "You got it!", "Awesome!", "Way to go!", "Correct!"];
     var ROUNDS = 10;
     var CHALLENGE_SECONDS = 30;
@@ -173,6 +220,7 @@
                     if (b.disabled || over) return;
                     if (val === q.answer) {
                         b.classList.add("correct");
+                        playSound("correct");
                         Array.prototype.forEach.call(choices.children, function (c) {
                             c.disabled = true;
                         });
@@ -191,6 +239,7 @@
                         firstTry = false;
                         b.classList.add("wrong");
                         b.disabled = true;
+                        playSound("wrong");
                         feedback.textContent = "Try again!";
                         feedback.className = "mg-feedback bad";
                     }
@@ -337,6 +386,7 @@
                 firstTile.classList.remove("sel");
                 firstTile.classList.add("hit");
                 tile.classList.add("hit");
+                playSound("correct");
                 feedback.textContent = nums[first] + " + " + nums[idx] + " = 10  " + pick(PRAISE);
                 feedback.className = "mg-feedback good";
                 found++;
@@ -359,6 +409,7 @@
             } else {
                 firstTile.classList.add("miss");
                 tile.classList.add("miss");
+                playSound("wrong");
                 feedback.textContent = "That makes " + (nums[first] + nums[idx]) + ". Try again!";
                 feedback.className = "mg-feedback bad";
                 var keep = first;
