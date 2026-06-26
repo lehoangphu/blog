@@ -23,6 +23,7 @@ from sqlalchemy import (
     String,
     Table,
     create_engine,
+    delete,
     func,
     insert,
     select,
@@ -169,6 +170,16 @@ scores = Table(
 def init_db():
     """Create the database tables if they do not yet exist."""
     metadata.create_all(engine)
+
+
+def purge_test_data():
+    """Remove rows created by the deployment persistence smoke test.
+
+    One-time cleanup of the ``persist-test`` marker message used to verify that
+    the database survives deployments. Idempotent and safe to run on every boot.
+    """
+    with engine.begin() as conn:
+        conn.execute(delete(messages).where(messages.c.username == "persist-test"))
 
 
 def db_info():

@@ -11,6 +11,7 @@ import db
 
 app = Flask(__name__)
 db.init_db()
+db.purge_test_data()
 
 
 @app.route("/")
@@ -56,11 +57,6 @@ def khanh_home():
 @app.route("/live")
 def live():
     return render_template("live.html", active="live")
-
-
-@app.route("/api/debug/db", methods=["GET"])
-def api_debug_db():
-    return jsonify(db.db_info())
 
 
 @app.route("/api/messages", methods=["GET"])
