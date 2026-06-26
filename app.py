@@ -3,6 +3,9 @@
 A small Flask app that serves the single-page site. Designed for Python 3.14
 and Azure App Service (Linux) behind Gunicorn; the WSGI entry point is the
 module-level ``app`` object, so ``gunicorn app:app`` works with no extra config.
+
+The chat/leaderboard database is stored on the persistent ``/home/data`` Azure
+Files mount (see ``db.py``) so it survives deployments and restarts.
 """
 
 from flask import Flask, jsonify, redirect, render_template, request
