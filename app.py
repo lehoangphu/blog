@@ -58,6 +58,11 @@ def live():
     return render_template("live.html", active="live")
 
 
+@app.route("/api/debug/db", methods=["GET"])
+def api_debug_db():
+    return jsonify(db.db_info())
+
+
 @app.route("/api/messages", methods=["GET"])
 def api_get_messages():
     after = request.args.get("after", default=0, type=int)
